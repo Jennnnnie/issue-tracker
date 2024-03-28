@@ -4,13 +4,14 @@ import SimpleMDE from 'react-simplemde-editor';
 import { useForm, Controller, Form } from 'react-hook-form';
 import axios from 'axios';
 import 'easymde/dist/easymde.min.css';
-// import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createIssueSchema } from '@/app/validationSchemas';
-import router, { Router } from 'next/router';
+import router from 'next/router';
 import { z } from 'zod';
 import ErrorMessage from '@/app/components/ErrorMessage';
+import Spinner from '@/app/components/Spinner';
 
 // interface IssueForm {
 //   title: string;
@@ -20,6 +21,8 @@ import ErrorMessage from '@/app/components/ErrorMessage';
 type IssueForm = z.infer<typeof createIssueSchema>;
 
 const NewIssuePage = () => {
+  const router = useRouter();
+
   const {
     register,
     control,
@@ -29,13 +32,17 @@ const NewIssuePage = () => {
     resolver: zodResolver(createIssueSchema),
   });
   const [error, setError] = useState('');
+  const [isSubmitting, setSubmitting] = useState(false);
 
   const onSubmit = async (data: IssueForm) => {
     try {
+      setSubmitting(true);
       await axios.post('/api/issues', data);
       router.push('/issues');
     } catch (error) {
+      setSubmitting(false);
       setError('An unexpected error occured.');
+      // console.log(error);
     }
   };
 
@@ -50,8 +57,8 @@ const NewIssuePage = () => {
         <TextField.Root>
           <TextField.Input placeholder='Title' {...register('title')} />
         </TextField.Root>
-        <ErrorMessage>{errors.title?.message}</ErrorMessage> //title? - optional
-        chain
+        <ErrorMessage>{errors.title?.message}</ErrorMessage>
+        {/* title? - optional chain */}
         <Controller
           name='description'
           control={control}
@@ -60,13 +67,19 @@ const NewIssuePage = () => {
           )}
         />
         <ErrorMessage>{errors.description?.message}</ErrorMessage>
-        <Button type='submit'>Submit New Issue</Button>
+        <Button disabled={isSubmitting}>
+          Submit New Issue
+          {isSubmitting && <Spinner />}
+        </Button>
       </form>
     </div>
   );
 };
 
 export default NewIssuePage;
-function setError(arg0: string) {
-  throw new Error('Function not implemented.');
-}
+// function setError(arg0: string) {
+//   throw new Error('Function not implemented.');
+// }
+// function setSubmitting(arg0: boolean) {
+//   throw new Error('Function not implemented.');
+// }
